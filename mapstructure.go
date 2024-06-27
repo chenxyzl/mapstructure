@@ -165,6 +165,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	"github.com/go-viper/mapstructure/v2/internal/errors"
 )
@@ -428,6 +429,12 @@ func (d *Decoder) Decode(input interface{}) error {
 
 // Decodes an unknown data type into a specific reflection value.
 func (d *Decoder) decode(name string, input interface{}, outVal reflect.Value) error {
+	// If we can't set the field, then it is unexported or something,
+	// and we just continue onwards.
+	if !outVal.CanSet() {
+		outVal = reflect.NewAt(outVal.Type(), unsafe.Pointer(outVal.UnsafeAddr()))
+	}
+
 	var inputVal reflect.Value
 	if input != nil {
 		inputVal = reflect.ValueOf(input)
